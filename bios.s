@@ -17,6 +17,9 @@ ACIA_CMD        = $5002
 ACIA_CTRL       = $5003
 PORTA           = $6001
 DDRA            = $6003
+T1LL            = $6006
+T1LH            = $6007
+IFR             = $600D
 
 LOAD:
                 rts
@@ -110,7 +113,7 @@ IRQ_HANDLER:
                 pha
                 phx
                 lda     ACIA_STATUS
-                ; For now, assume the only source of interrupts is incoming data
+                bpl     @not_full ; Skip UART processing if no UART intererupt
                 lda     ACIA_DATA
                 jsr     WRITE_BUFFER
                 jsr     BUFFER_SIZE
@@ -120,6 +123,22 @@ IRQ_HANDLER:
                 ora     PORTA
                 sta     PORTA
 @not_full:
+                lda     IFR
+                bpl     @irq_exit ; No interrupt from 6522
+                lda     PORTB ; PB7 will be the current phase
+                bmi     @snd2 ; if PB7 (minus flag) is set, set timer to SND2
+                ; otherwise set timer to SND1
+                lda     SND1+1
+                sta     T1LL
+                lda     SND1
+                sta     T1LH
+                jmp     @irq_exit
+@snd2:
+                lda     SND2+1
+                sta     T1LL
+                lda     SND2
+                sta     T1LH
+@irq_exit:
                 plx
                 pla
                 rti

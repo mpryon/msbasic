@@ -3,6 +3,7 @@
 T1CL   = $6004
 T1CH   = $6005
 ACR    = $600B
+IER    = $600E
 
 BEEP:
   jsr FRMEVL
@@ -16,12 +17,24 @@ BEEP:
   ; Set T1 timer with parameter
   lda FAC+4
   sta T1CL
+  sta SND1+1
   lda FAC+3
   sta T1CH
+  sta SND1
 
   ; Start square wave on PB7
   lda #$c0
   sta ACR
+  sta IER
+
+  ; Get second parameter and store
+  jsr CHKCOM
+  jsr FRMEVL
+  jsr MKINT
+  lda FAC+4
+  sta SND2+1
+  lda FAC+3
+  sta SND2
 
 @silent:
   jsr CHKCOM
@@ -42,6 +55,8 @@ BEEP:
   ; Stop square wave on PB7
   lda #0
   sta ACR
+  lda #$40
+  sta IER
 
 @done:
   rts

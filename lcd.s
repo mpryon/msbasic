@@ -143,4 +143,9 @@ lcd_print_char:
   sta PORTB
   rts
 
+LCDCLEAR:
+  lda #%00000001  ; Clear display
+  jsr lcd_instruction
+  rts
+
 .endif
